@@ -1,0 +1,62 @@
+"""
+Simple Flask web application for DevOps lab
+This app demonstrates basic web functionality with some code quality issues
+"""
+import os
+import redis
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+r = redis.Redis(host='localhost', port=6379, db=0)
+
+
+@app.route('/')
+def hello_world():
+    """Thread-safe version using Redis."""
+    visits = r.incr('visits')
+    return jsonify({
+        'message': 'Hello from DevOps Lab!',
+        'version': '1.0.0',
+        'environment': os.environ.get('ENVIRONMENT', 'development'),
+        'visits': visits
+    })
+
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint for load balancer"""
+    return jsonify({'status': 'healthy', 'service': 'flask-app'})
+
+@app.route('/info')
+def get_info():
+    """Returns application information"""
+    return jsonify({
+        'app_name': 'DevOps Lab App',
+        'python_version': '3.11',
+        'framework': 'Flask'
+    })
+
+
+def calculate_result(x: int, y: int) -> int:
+    """Return a computed result based on the values of x and y."""
+    if x <= 10:
+        return 0
+
+    if y > 10:
+        return x * y
+
+    return x + y
+
+@app.route('/calculate')
+def calculate():
+    """Endpoint that uses the bad function"""
+    x = int(request.args.get('x', 5))
+    y = int(request.args.get('y', 3))
+    result = calculate_result(x, y)
+    return jsonify({'result': result})
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
