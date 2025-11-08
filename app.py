@@ -8,18 +8,19 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-r = redis.Redis(host='localhost', port=6379, db=0)
-
+# Global variable (pylint will flag this)
+counter = 0
 
 @app.route('/')
 def hello_world():
-    """Thread-safe version using Redis."""
-    visits = r.incr('visits')
+    """Main endpoint that returns a greeting"""
+    global counter
+    counter += 1
     return jsonify({
         'message': 'Hello from DevOps Lab!',
         'version': '1.0.0',
         'environment': os.environ.get('ENVIRONMENT', 'development'),
-        'visits': visits
+        'visits': counter
     })
 
 
